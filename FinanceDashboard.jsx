@@ -1,6 +1,6 @@
 ﻿import { useState, useMemo, useEffect } from "react";
 
-// â”€â”€ MOCK DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 const INITIAL_TRANSACTIONS = [
   { id: 1,  date: "2026-03-01", desc: "Salary",           category: "Income",       amount:  85000, type: "income"  },
   { id: 2,  date: "2026-03-02", desc: "Rent",             category: "Housing",      amount: -22000, type: "expense" },
@@ -52,7 +52,7 @@ function fmtFull(n) {
   return `â‚¹${Math.abs(n).toLocaleString("en-IN")}`;
 }
 
-// â”€â”€ MINI CHART: Sparkline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 function Sparkline({ data, color, width=120, height=40 }) {
   if (!data.length) return null;
   const min = Math.min(...data), max = Math.max(...data);
@@ -71,8 +71,7 @@ function Sparkline({ data, color, width=120, height=40 }) {
   );
 }
 
-// â”€â”€ DONUT CHART â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-function DonutChart({ data }) {
+
   const total = data.reduce((s, d) => s + d.value, 0);
   let angle = -90;
   const slices = data.map(d => {
@@ -109,7 +108,7 @@ function DonutChart({ data }) {
   );
 }
 
-// â”€â”€ BAR CHART â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
 function BarChart({ monthlyData }) {
   const maxVal = Math.max(...monthlyData.flatMap(m => [m.income, m.expense]));
   const H = 140;
@@ -140,7 +139,6 @@ function BarChart({ monthlyData }) {
   );
 }
 
-// â”€â”€ MODAL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function Modal({ onClose, onSave, initial }) {
   const [form, setForm] = useState(initial || { date: new Date().toISOString().slice(0,10), desc: "", category: "Food", amount: "", type: "expense" });
   const set = (k, v) => setForm(f => ({...f, [k]: v}));
@@ -193,7 +191,6 @@ function Modal({ onClose, onSave, initial }) {
   );
 }
 
-// â”€â”€ MAIN APP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export default function App() {
   const [role, setRole] = useState("viewer");
   const [tab, setTab] = useState("dashboard");
@@ -211,12 +208,10 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem("fin_txns", JSON.stringify(txns)); }, [txns]);
 
-  // â”€â”€ Derived â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const totalIncome = useMemo(() => txns.filter(t=>t.type==="income").reduce((s,t)=>s+t.amount,0), [txns]);
   const totalExpense = useMemo(() => txns.filter(t=>t.type==="expense").reduce((s,t)=>s+Math.abs(t.amount),0), [txns]);
   const balance = totalIncome - totalExpense;
 
-  // Monthly data for bar chart
   const monthlyData = useMemo(() => {
     const map = {};
     txns.forEach(t => {
@@ -229,7 +224,6 @@ export default function App() {
     return Object.values(map).slice(-6);
   }, [txns]);
 
-  // Spending by category for donut
   const categoryData = useMemo(() => {
     const map = {};
     txns.filter(t=>t.type==="expense").forEach(t => {
@@ -240,14 +234,12 @@ export default function App() {
 
   const topCategory = categoryData[0]?.label || "â€”";
 
-  // Balance trend sparkline
   const balanceTrend = useMemo(() => {
     const sorted = [...txns].sort((a,b)=>new Date(a.date)-new Date(b.date));
     let running = 0;
     return sorted.map(t => { running += t.amount; return running; });
   }, [txns]);
 
-  // Filtered & sorted transactions
   const filteredTxns = useMemo(() => {
     let list = txns.filter(t => {
       const matchSearch = t.desc.toLowerCase().includes(search.toLowerCase()) || t.category.toLowerCase().includes(search.toLowerCase());
@@ -264,7 +256,6 @@ export default function App() {
     return list;
   }, [txns, search, catFilter, typeFilter, sortKey, sortDir]);
 
-  // Insights
   const prevMonthExpense = useMemo(() => {
     const now = new Date("2026-03-31");
     const prevMonth = new Date("2026-02-28");
@@ -282,7 +273,6 @@ export default function App() {
   const expenseDelta = currMonthExpense - prevMonthExpense;
   const savingsRate = totalIncome > 0 ? ((balance / totalIncome) * 100).toFixed(1) : 0;
 
-  // â”€â”€ Styles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const bg = darkMode ? "#0a0f1e" : "#f1f5f9";
   const card = darkMode ? "#1e293b" : "#ffffff";
   const border = darkMode ? "#1e3a5f" : "#e2e8f0";
@@ -315,7 +305,6 @@ export default function App() {
   const sortToggle = (key) => { if(sortKey===key) setSortDir(d=>-d); else { setSortKey(key); setSortDir(-1); } };
   const sortArrow = (key) => sortKey === key ? (sortDir === 1 ? " â†‘" : " â†“") : "";
 
-  // â”€â”€ ADD/EDIT handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const handleSave = (form) => {
     if (typeof modal === "object" && modal.id) {
       setTxns(ts => ts.map(t => t.id === modal.id ? {...t, ...form, amount: parseFloat(form.amount)} : t));
@@ -333,7 +322,6 @@ export default function App() {
     a.download = "transactions.csv"; a.click();
   };
 
-  // â”€â”€ RENDER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   return (
     <div style={S.app}>
       {/* Fonts */}
@@ -379,7 +367,7 @@ export default function App() {
           </div>
         )}
 
-        {/* â”€â”€ DASHBOARD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {}
         {tab === "dashboard" && (
           <>
             <h2 style={S.sectionTitle}>Overview</h2>
@@ -441,7 +429,7 @@ export default function App() {
           </>
         )}
 
-        {/* â”€â”€ TRANSACTIONS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {}
         {tab === "transactions" && (
           <>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.25rem",flexWrap:"wrap",gap:"0.75rem"}}>
@@ -519,7 +507,7 @@ export default function App() {
           </>
         )}
 
-        {/* â”€â”€ INSIGHTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {}
         {tab === "insights" && (
           <>
             <h2 style={S.sectionTitle}>Insights</h2>
