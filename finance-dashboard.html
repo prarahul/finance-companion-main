@@ -1,0 +1,1068 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FinFlow â€” Finance Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/Recharts.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c10;
+    --surface: #10141c;
+    --surface2: #161b27;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --text-muted: #6b7280;
+    --text-dim: #4b5563;
+    --accent: #6ee7b7;
+    --accent2: #34d399;
+    --red: #f87171;
+    --blue: #60a5fa;
+    --yellow: #fbbf24;
+    --purple: #a78bfa;
+    --card-glow: rgba(110,231,183,0.04);
+  }
+
+  body {
+    font-family: 'Syne', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Subtle grid bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(110,231,183,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(110,231,183,0.025) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #root { position: relative; z-index: 1; }
+
+  /* Layout */
+  .app { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+    transition: transform 0.3s ease;
+  }
+  .sidebar-logo {
+    padding: 0 20px 28px;
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sidebar-logo span { color: var(--accent); }
+  .logo-dot {
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent);
+  }
+  .nav-section { padding: 0 12px; margin-bottom: 8px; }
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    padding: 0 8px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .nav-item.active {
+    background: rgba(110,231,183,0.1);
+    color: var(--accent);
+  }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; padding: 16px 12px; border-top: 1px solid var(--border); }
+
+  /* Role switcher */
+  .role-switch {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .role-label { font-size: 10px; color: var(--text-dim); font-family: 'DM Mono', monospace; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .role-select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    padding: 6px 8px;
+    cursor: pointer;
+    outline: none;
+  }
+  .role-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    margin-top: 6px;
+    font-size: 11px;
+    font-family: 'DM Mono', monospace;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+  .role-badge.admin { background: rgba(251,191,36,0.12); color: var(--yellow); }
+  .role-badge.viewer { background: rgba(96,165,250,0.12); color: var(--blue); }
+
+  /* Main */
+  .main { margin-left: 220px; flex: 1; min-width: 0; }
+
+  /* Topbar */
+  .topbar {
+    padding: 20px 28px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(10,12,16,0.8);
+    backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-title { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s ease;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger {
+    background: rgba(248,113,113,0.1);
+    color: var(--red);
+    border: 1px solid rgba(248,113,113,0.2);
+  }
+  .btn-danger:hover { background: rgba(248,113,113,0.2); }
+
+  /* Page content */
+  .page { padding: 28px; }
+
+  /* Cards grid */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(110,231,183,0.3), transparent);
+  }
+  .card-label { font-size: 11px; font-weight: 500; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; font-family: 'DM Mono', monospace; margin-bottom: 10px; }
+  .card-value { font-size: 26px; font-weight: 800; letter-spacing: -1px; }
+  .card-value.green { color: var(--accent); }
+  .card-value.red { color: var(--red); }
+  .card-value.blue { color: var(--blue); }
+  .card-change { font-size: 12px; font-family: 'DM Mono', monospace; margin-top: 6px; }
+  .card-change.up { color: var(--accent); }
+  .card-change.down { color: var(--red); }
+  .card-icon { position: absolute; top: 16px; right: 16px; font-size: 22px; opacity: 0.25; }
+
+  /* Charts section */
+  .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .chart-title { font-size: 14px; font-weight: 700; }
+  .chart-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+  /* Transactions table */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-title { font-size: 16px; font-weight: 700; }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filter-input, .filter-select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .filter-input:focus, .filter-select:focus { border-color: var(--accent); }
+  .filter-input { min-width: 200px; }
+
+  .tx-table { width: 100%; border-collapse: collapse; }
+  .tx-table th {
+    font-size: 10.5px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  .tx-table th:hover { color: var(--text-muted); }
+  .tx-table td {
+    padding: 12px 12px;
+    font-size: 13.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    vertical-align: middle;
+  }
+  .tx-table tr:last-child td { border-bottom: none; }
+  .tx-table tr { transition: background 0.1s; }
+  .tx-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .tx-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    overflow-x: auto;
+  }
+  .tx-table-header { padding: 20px 20px 0; }
+
+  .amount-income { color: var(--accent); font-family: 'DM Mono', monospace; font-weight: 500; }
+  .amount-expense { color: var(--red); font-family: 'DM Mono', monospace; font-weight: 500; }
+
+  .cat-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .type-badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+  }
+  .type-income { background: rgba(110,231,183,0.1); color: var(--accent); }
+  .type-expense { background: rgba(248,113,113,0.1); color: var(--red); }
+
+  /* Insights */
+  .insights-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .insight-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .insight-icon { font-size: 28px; margin-bottom: 12px; }
+  .insight-title { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+  .insight-value { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .insight-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%; max-width: 440px;
+    margin: 16px;
+  }
+  .modal-title { font-size: 18px; font-weight: 800; margin-bottom: 20px; }
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 11px; color: var(--text-muted); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; display: block; }
+  .form-input, .form-select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus { border-color: var(--accent); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-text { font-size: 14px; }
+
+  /* Pagination */
+  .pagination { display: flex; align-items: center; gap: 8px; justify-content: flex-end; padding: 16px 20px; border-top: 1px solid var(--border); }
+  .page-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; color: var(--text-muted); font-family: 'Syne', sans-serif; font-size: 13px; padding: 5px 12px; cursor: pointer; transition: all 0.15s; }
+  .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .page-btn.active { background: rgba(110,231,183,0.1); border-color: var(--accent); color: var(--accent); }
+  .page-btn:disabled { opacity: 0.3; cursor: default; }
+
+  /* Notification toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--accent);
+    z-index: 300;
+    animation: slideUp 0.2s ease;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Hamburger for mobile */
+  .hamburger { display: none; background: none; border: none; color: var(--text); font-size: 22px; cursor: pointer; }
+  .overlay-bg { display: none; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; }
+    .hamburger { display: block; }
+    .overlay-bg.show { display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99; }
+    .cards-grid { grid-template-columns: 1fr 1fr; }
+    .page { padding: 16px; }
+    .topbar { padding: 14px 16px; }
+  }
+  @media (max-width: 480px) {
+    .cards-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useReducer, useMemo, useEffect, useCallback } = React;
+const {
+  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend
+} = Recharts;
+
+// â”€â”€â”€ MOCK DATA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const CATEGORIES = ['Food', 'Transport', 'Shopping', 'Rent', 'Entertainment', 'Healthcare', 'Utilities', 'Salary', 'Freelance', 'Investment'];
+const CAT_COLORS = {
+  Food: '#f87171', Transport: '#60a5fa', Shopping: '#a78bfa', Rent: '#fbbf24',
+  Entertainment: '#f472b6', Healthcare: '#34d399', Utilities: '#fb923c',
+  Salary: '#6ee7b7', Freelance: '#38bdf8', Investment: '#818cf8'
+};
+
+const INITIAL_TX = [
+  { id: 1, date: '2024-04-01', description: 'Monthly Salary', category: 'Salary', type: 'income', amount: 85000 },
+  { id: 2, date: '2024-04-02', description: 'House Rent', category: 'Rent', type: 'expense', amount: 22000 },
+  { id: 3, date: '2024-04-03', description: 'Grocery Shopping', category: 'Food', type: 'expense', amount: 3200 },
+  { id: 4, date: '2024-04-05', description: 'Metro Card Recharge', category: 'Transport', type: 'expense', amount: 800 },
+  { id: 5, date: '2024-04-06', description: 'Netflix Subscription', category: 'Entertainment', type: 'expense', amount: 649 },
+  { id: 6, date: '2024-04-08', description: 'Freelance Project - UI Design', category: 'Freelance', type: 'income', amount: 18000 },
+  { id: 7, date: '2024-04-10', description: 'Amazon Shopping', category: 'Shopping', type: 'expense', amount: 4500 },
+  { id: 8, date: '2024-04-12', description: 'Doctor Visit', category: 'Healthcare', type: 'expense', amount: 1200 },
+  { id: 9, date: '2024-04-14', description: 'Electricity Bill', category: 'Utilities', type: 'expense', amount: 1800 },
+  { id: 10, date: '2024-04-15', description: 'SIP Investment', category: 'Investment', type: 'expense', amount: 10000 },
+  { id: 11, date: '2024-04-17', description: 'Restaurant Dinner', category: 'Food', type: 'expense', amount: 2100 },
+  { id: 12, date: '2024-04-18', description: 'Cab Rides', category: 'Transport', type: 'expense', amount: 1200 },
+  { id: 13, date: '2024-04-20', description: 'Dividend Income', category: 'Investment', type: 'income', amount: 3500 },
+  { id: 14, date: '2024-04-22', description: 'Clothing Shopping', category: 'Shopping', type: 'expense', amount: 5600 },
+  { id: 15, date: '2024-04-24', description: 'Water Bill', category: 'Utilities', type: 'expense', amount: 400 },
+  { id: 16, date: '2024-04-26', description: 'Movie Tickets', category: 'Entertainment', type: 'expense', amount: 900 },
+  { id: 17, date: '2024-04-28', description: 'Pharmacy', category: 'Healthcare', type: 'expense', amount: 680 },
+  { id: 18, date: '2024-04-30', description: 'Freelance - Logo Design', category: 'Freelance', type: 'income', amount: 8000 },
+  { id: 19, date: '2024-03-01', description: 'Monthly Salary', category: 'Salary', type: 'income', amount: 85000 },
+  { id: 20, date: '2024-03-03', description: 'House Rent', category: 'Rent', type: 'expense', amount: 22000 },
+  { id: 21, date: '2024-03-05', description: 'Grocery Shopping', category: 'Food', type: 'expense', amount: 2900 },
+  { id: 22, date: '2024-03-07', description: 'Freelance Project', category: 'Freelance', type: 'income', amount: 12000 },
+  { id: 23, date: '2024-03-10', description: 'Amazon Shopping', category: 'Shopping', type: 'expense', amount: 7200 },
+  { id: 24, date: '2024-03-15', description: 'Electricity Bill', category: 'Utilities', type: 'expense', amount: 2100 },
+  { id: 25, date: '2024-03-20', description: 'Investment SIP', category: 'Investment', type: 'expense', amount: 10000 },
+  { id: 26, date: '2024-03-22', description: 'Entertainment', category: 'Entertainment', type: 'expense', amount: 1500 },
+  { id: 27, date: '2024-02-01', description: 'Monthly Salary', category: 'Salary', type: 'income', amount: 85000 },
+  { id: 28, date: '2024-02-03', description: 'House Rent', category: 'Rent', type: 'expense', amount: 22000 },
+  { id: 29, date: '2024-02-05', description: 'Food & Dining', category: 'Food', type: 'expense', amount: 4100 },
+  { id: 30, date: '2024-02-08', description: 'Healthcare Checkup', category: 'Healthcare', type: 'expense', amount: 2500 },
+  { id: 31, date: '2024-02-15', description: 'Investment SIP', category: 'Investment', type: 'expense', amount: 10000 },
+  { id: 32, date: '2024-02-18', description: 'Freelance Income', category: 'Freelance', type: 'income', amount: 6000 },
+  { id: 33, date: '2024-02-22', description: 'Shopping Spree', category: 'Shopping', type: 'expense', amount: 8900 },
+  { id: 34, date: '2024-01-01', description: 'Monthly Salary', category: 'Salary', type: 'income', amount: 80000 },
+  { id: 35, date: '2024-01-03', description: 'House Rent', category: 'Rent', type: 'expense', amount: 22000 },
+  { id: 36, date: '2024-01-07', description: 'Grocery', category: 'Food', type: 'expense', amount: 3500 },
+  { id: 37, date: '2024-01-15', description: 'Investment SIP', category: 'Investment', type: 'expense', amount: 10000 },
+  { id: 38, date: '2024-01-20', description: 'Utilities', category: 'Utilities', type: 'expense', amount: 2200 },
+];
+
+// â”€â”€â”€ STATE MANAGEMENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const initialState = {
+  transactions: INITIAL_TX,
+  filters: { search: '', type: 'all', category: 'all', sortBy: 'date', sortDir: 'desc' },
+  role: 'admin',
+  page: 1,
+};
+
+function reducer(state, action) {
+  switch (action.type) {
+    case 'ADD_TX':
+      return { ...state, transactions: [{ ...action.payload, id: Date.now() }, ...state.transactions] };
+    case 'DELETE_TX':
+      return { ...state, transactions: state.transactions.filter(t => t.id !== action.id) };
+    case 'EDIT_TX':
+      return { ...state, transactions: state.transactions.map(t => t.id === action.payload.id ? action.payload : t) };
+    case 'SET_FILTER':
+      return { ...state, filters: { ...state.filters, ...action.payload }, page: 1 };
+    case 'SET_ROLE':
+      return { ...state, role: action.role };
+    case 'SET_PAGE':
+      return { ...state, page: action.page };
+    default: return state;
+  }
+}
+
+// â”€â”€â”€ HELPERS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const fmt = (n) => 'â‚¹' + Math.abs(n).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+const fmtDate = (d) => new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+
+// â”€â”€â”€ COMPONENTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function Toast({ msg, onClose }) {
+  useEffect(() => { const t = setTimeout(onClose, 3000); return () => clearTimeout(t); }, []);
+  return <div className="toast">âœ“ {msg}</div>;
+}
+
+function SummaryCards({ transactions }) {
+  const income = transactions.filter(t => t.type === 'income').reduce((a, t) => a + t.amount, 0);
+  const expense = transactions.filter(t => t.type === 'expense').reduce((a, t) => a + t.amount, 0);
+  const balance = income - expense;
+  const count = transactions.length;
+  return (
+    <div className="cards-grid">
+      <div className="card">
+        <div className="card-icon">ðŸ’°</div>
+        <div className="card-label">Net Balance</div>
+        <div className={`card-value ${balance >= 0 ? 'green' : 'red'}`}>{fmt(balance)}</div>
+        <div className="card-change up">â†‘ All time</div>
+      </div>
+      <div className="card">
+        <div className="card-icon">ðŸ“ˆ</div>
+        <div className="card-label">Total Income</div>
+        <div className="card-value green">{fmt(income)}</div>
+        <div className="card-change up">â†‘ Active</div>
+      </div>
+      <div className="card">
+        <div className="card-icon">ðŸ“‰</div>
+        <div className="card-label">Total Expenses</div>
+        <div className="card-value red">{fmt(expense)}</div>
+        <div className="card-change down">â†“ Spent</div>
+      </div>
+      <div className="card">
+        <div className="card-icon">ðŸ”</div>
+        <div className="card-label">Transactions</div>
+        <div className="card-value blue">{count}</div>
+        <div className="card-change" style={{color:'var(--text-muted)'}}>Total records</div>
+      </div>
+    </div>
+  );
+}
+
+function BalanceTrend({ transactions }) {
+  const monthlyData = useMemo(() => {
+    const months = {};
+    transactions.forEach(t => {
+      const key = t.date.slice(0, 7);
+      if (!months[key]) months[key] = { month: key, income: 0, expense: 0 };
+      if (t.type === 'income') months[key].income += t.amount;
+      else months[key].expense += t.amount;
+    });
+    return Object.values(months).sort((a, b) => a.month.localeCompare(b.month)).map(m => ({
+      ...m,
+      balance: m.income - m.expense,
+      label: new Date(m.month + '-01').toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })
+    }));
+  }, [transactions]);
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', fontSize: 12 }}>
+        <div style={{ color: '#9ca3af', marginBottom: 6, fontFamily: 'DM Mono' }}>{label}</div>
+        {payload.map(p => (
+          <div key={p.name} style={{ color: p.color, fontFamily: 'DM Mono' }}>
+            {p.name}: {fmt(p.value)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="chart-card" style={{flex: 1}}>
+      <div className="chart-header">
+        <div>
+          <div className="chart-title">Monthly Cash Flow</div>
+          <div className="chart-subtitle">Income vs Expense trend</div>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={monthlyData} barCategoryGap="30%">
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+          <XAxis dataKey="label" tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'DM Mono' }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'DM Mono' }} axisLine={false} tickLine={false} tickFormatter={v => 'â‚¹' + (v/1000) + 'k'} />
+          <Tooltip content={<CustomTooltip />} />
+          <Bar dataKey="income" name="Income" fill="#6ee7b7" radius={[4,4,0,0]} />
+          <Bar dataKey="expense" name="Expense" fill="#f87171" radius={[4,4,0,0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function SpendingPie({ transactions }) {
+  const data = useMemo(() => {
+    const cats = {};
+    transactions.filter(t => t.type === 'expense').forEach(t => {
+      cats[t.category] = (cats[t.category] || 0) + t.amount;
+    });
+    return Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }));
+  }, [transactions]);
+
+  const CustomTooltip = ({ active, payload }) => {
+    if (!active || !payload?.length) return null;
+    const { name, value } = payload[0].payload;
+    return (
+      <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', fontSize: 12 }}>
+        <div style={{ color: CAT_COLORS[name] || '#9ca3af', fontWeight: 700 }}>{name}</div>
+        <div style={{ color: '#e8eaf0', fontFamily: 'DM Mono', marginTop: 4 }}>{fmt(value)}</div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="chart-card">
+      <div className="chart-header">
+        <div>
+          <div className="chart-title">Spending Breakdown</div>
+          <div className="chart-subtitle">By category</div>
+        </div>
+      </div>
+      <ResponsiveContainer width="100%" height={200}>
+        <PieChart>
+          <Pie data={data} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
+            {data.map((entry) => (
+              <Cell key={entry.name} fill={CAT_COLORS[entry.name] || '#6b7280'} />
+            ))}
+          </Pie>
+          <Tooltip content={<CustomTooltip />} />
+        </PieChart>
+      </ResponsiveContainer>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: 8 }}>
+        {data.slice(0, 6).map(d => (
+          <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: '#9ca3af' }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: CAT_COLORS[d.name] || '#6b7280', flexShrink: 0 }} />
+            {d.name}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TransactionModal({ initial, onSave, onClose }) {
+  const [form, setForm] = useState(initial || { date: new Date().toISOString().slice(0, 10), description: '', category: 'Food', type: 'expense', amount: '' });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const handleSubmit = () => {
+    if (!form.description || !form.amount || !form.date) return;
+    onSave({ ...form, amount: parseFloat(form.amount) });
+    onClose();
+  };
+  return (
+    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal">
+        <div className="modal-title">{initial ? 'Edit Transaction' : 'Add Transaction'}</div>
+        <div className="form-group">
+          <label className="form-label">Description</label>
+          <input className="form-input" value={form.description} onChange={e => set('description', e.target.value)} placeholder="e.g. Monthly Salary" />
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Amount (â‚¹)</label>
+            <input className="form-input" type="number" value={form.amount} onChange={e => set('amount', e.target.value)} placeholder="0.00" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Date</label>
+            <input className="form-input" type="date" value={form.date} onChange={e => set('date', e.target.value)} />
+          </div>
+        </div>
+        <div className="form-row">
+          <div className="form-group">
+            <label className="form-label">Category</label>
+            <select className="form-select" value={form.category} onChange={e => set('category', e.target.value)}>
+              {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Type</label>
+            <select className="form-select" value={form.type} onChange={e => set('type', e.target.value)}>
+              <option value="expense">Expense</option>
+              <option value="income">Income</option>
+            </select>
+          </div>
+        </div>
+        <div className="modal-actions">
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={handleSubmit}>{initial ? 'Save Changes' : 'Add Transaction'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TransactionsPage({ state, dispatch, role, showToast }) {
+  const [modal, setModal] = useState(null); // null | 'add' | {tx}
+  const [editTx, setEditTx] = useState(null);
+  const { filters, page } = state;
+  const PER_PAGE = 10;
+
+  const filtered = useMemo(() => {
+    let tx = [...state.transactions];
+    if (filters.search) {
+      const q = filters.search.toLowerCase();
+      tx = tx.filter(t => t.description.toLowerCase().includes(q) || t.category.toLowerCase().includes(q));
+    }
+    if (filters.type !== 'all') tx = tx.filter(t => t.type === filters.type);
+    if (filters.category !== 'all') tx = tx.filter(t => t.category === filters.category);
+    tx.sort((a, b) => {
+      let va = a[filters.sortBy], vb = b[filters.sortBy];
+      if (filters.sortBy === 'amount') { va = +va; vb = +vb; }
+      if (va < vb) return filters.sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return filters.sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+    return tx;
+  }, [state.transactions, filters]);
+
+  const pages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  const toggleSort = (col) => {
+    if (filters.sortBy === col) dispatch({ type: 'SET_FILTER', payload: { sortDir: filters.sortDir === 'asc' ? 'desc' : 'asc' } });
+    else dispatch({ type: 'SET_FILTER', payload: { sortBy: col, sortDir: 'desc' } });
+  };
+  const sortIcon = (col) => filters.sortBy === col ? (filters.sortDir === 'asc' ? ' â†‘' : ' â†“') : '';
+
+  const handleAdd = (tx) => { dispatch({ type: 'ADD_TX', payload: tx }); showToast('Transaction added'); };
+  const handleEdit = (tx) => { dispatch({ type: 'EDIT_TX', payload: tx }); showToast('Transaction updated'); };
+  const handleDelete = (id) => { dispatch({ type: 'DELETE_TX', id }); showToast('Transaction deleted'); };
+
+  return (
+    <div className="page">
+      {(modal === 'add') && <TransactionModal onSave={handleAdd} onClose={() => setModal(null)} />}
+      {editTx && <TransactionModal initial={editTx} onSave={handleEdit} onClose={() => setEditTx(null)} />}
+      <div className="section-header">
+        <div className="section-title">Transactions</div>
+        {role === 'admin' && (
+          <button className="btn btn-primary" onClick={() => setModal('add')}>+ Add Transaction</button>
+        )}
+      </div>
+      <div className="filters">
+        <input className="filter-input" placeholder="ðŸ” Search transactions..." value={filters.search}
+          onChange={e => dispatch({ type: 'SET_FILTER', payload: { search: e.target.value } })} />
+        <select className="filter-select" value={filters.type}
+          onChange={e => dispatch({ type: 'SET_FILTER', payload: { type: e.target.value } })}>
+          <option value="all">All Types</option>
+          <option value="income">Income</option>
+          <option value="expense">Expense</option>
+        </select>
+        <select className="filter-select" value={filters.category}
+          onChange={e => dispatch({ type: 'SET_FILTER', payload: { category: e.target.value } })}>
+          <option value="all">All Categories</option>
+          {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+        </select>
+      </div>
+      <div className="tx-table-wrap">
+        {paginated.length === 0 ? (
+          <div className="empty"><div className="empty-icon">ðŸ“­</div><div className="empty-text">No transactions found</div></div>
+        ) : (
+          <>
+            <table className="tx-table">
+              <thead>
+                <tr>
+                  <th onClick={() => toggleSort('date')}>Date{sortIcon('date')}</th>
+                  <th>Description</th>
+                  <th onClick={() => toggleSort('category')}>Category{sortIcon('category')}</th>
+                  <th>Type</th>
+                  <th onClick={() => toggleSort('amount')}>Amount{sortIcon('amount')}</th>
+                  {role === 'admin' && <th>Actions</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {paginated.map(tx => (
+                  <tr key={tx.id}>
+                    <td style={{ fontFamily: 'DM Mono', fontSize: 12, color: 'var(--text-muted)' }}>{fmtDate(tx.date)}</td>
+                    <td style={{ fontWeight: 500 }}>{tx.description}</td>
+                    <td>
+                      <span className="cat-badge" style={{ background: (CAT_COLORS[tx.category] || '#6b7280') + '18', color: CAT_COLORS[tx.category] || '#6b7280' }}>
+                        {tx.category}
+                      </span>
+                    </td>
+                    <td><span className={`type-badge type-${tx.type}`}>{tx.type}</span></td>
+                    <td className={`amount-${tx.type}`}>{tx.type === 'income' ? '+' : '-'}{fmt(tx.amount)}</td>
+                    {role === 'admin' && (
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <button className="btn btn-ghost" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => setEditTx(tx)}>Edit</button>
+                          <button className="btn btn-danger" style={{ padding: '4px 10px', fontSize: 12 }} onClick={() => handleDelete(tx.id)}>Del</button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <div className="pagination">
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'DM Mono', marginRight: 8 }}>
+                {filtered.length} results
+              </span>
+              <button className="page-btn" onClick={() => dispatch({ type: 'SET_PAGE', page: page - 1 })} disabled={page === 1}>â†</button>
+              {Array.from({ length: pages }, (_, i) => i + 1).filter(p => Math.abs(p - page) <= 2).map(p => (
+                <button key={p} className={`page-btn ${p === page ? 'active' : ''}`} onClick={() => dispatch({ type: 'SET_PAGE', page: p })}>{p}</button>
+              ))}
+              <button className="page-btn" onClick={() => dispatch({ type: 'SET_PAGE', page: page + 1 })} disabled={page === pages}>â†’</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InsightsPage({ transactions }) {
+  const expenses = transactions.filter(t => t.type === 'expense');
+  const income = transactions.filter(t => t.type === 'income');
+  const totalExp = expenses.reduce((a, t) => a + t.amount, 0);
+  const totalInc = income.reduce((a, t) => a + t.amount, 0);
+
+  const catTotals = useMemo(() => {
+    const m = {};
+    expenses.forEach(t => m[t.category] = (m[t.category] || 0) + t.amount);
+    return Object.entries(m).sort((a, b) => b[1] - a[1]);
+  }, [transactions]);
+
+  const topCat = catTotals[0];
+  const savingsRate = totalInc > 0 ? (((totalInc - totalExp) / totalInc) * 100).toFixed(1) : 0;
+
+  const monthlyExp = useMemo(() => {
+    const m = {};
+    expenses.forEach(t => {
+      const k = t.date.slice(0, 7);
+      m[k] = (m[k] || 0) + t.amount;
+    });
+    return Object.entries(m).sort((a, b) => a[0].localeCompare(b[0])).map(([key, val]) => ({
+      month: new Date(key + '-01').toLocaleDateString('en-IN', { month: 'short', year: '2-digit' }),
+      expense: val
+    }));
+  }, [transactions]);
+
+  const avgMonthlyExp = monthlyExp.length > 0 ? (monthlyExp.reduce((a, m) => a + m.expense, 0) / monthlyExp.length).toFixed(0) : 0;
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (!active || !payload?.length) return null;
+    return (
+      <div style={{ background: '#161b27', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '10px 14px', fontSize: 12 }}>
+        <div style={{ color: '#9ca3af', marginBottom: 4, fontFamily: 'DM Mono' }}>{label}</div>
+        <div style={{ color: '#f87171', fontFamily: 'DM Mono' }}>{fmt(payload[0]?.value)}</div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="page">
+      <div className="section-header" style={{ marginBottom: 20 }}>
+        <div className="section-title">Insights</div>
+      </div>
+      <div className="insights-grid" style={{ marginBottom: 24 }}>
+        <div className="insight-card">
+          <div className="insight-icon">ðŸ”¥</div>
+          <div className="insight-title">Top Spending Category</div>
+          <div className="insight-value" style={{ color: topCat ? CAT_COLORS[topCat[0]] : 'var(--text)' }}>
+            {topCat ? topCat[0] : 'â€”'}
+          </div>
+          <div className="insight-desc">
+            {topCat ? `${fmt(topCat[1])} spent â€” ${((topCat[1] / totalExp) * 100).toFixed(1)}% of total expenses` : 'No data'}
+          </div>
+        </div>
+        <div className="insight-card">
+          <div className="insight-icon">ðŸ’¹</div>
+          <div className="insight-title">Savings Rate</div>
+          <div className="insight-value" style={{ color: +savingsRate > 20 ? 'var(--accent)' : 'var(--yellow)' }}>
+            {savingsRate}%
+          </div>
+          <div className="insight-desc">
+            {+savingsRate > 30 ? 'Excellent! You\'re saving a healthy portion.' : +savingsRate > 10 ? 'Good, but room to improve.' : 'Low savings rate â€” consider cutting expenses.'}
+          </div>
+        </div>
+        <div className="insight-card">
+          <div className="insight-icon">ðŸ“…</div>
+          <div className="insight-title">Avg Monthly Expense</div>
+          <div className="insight-value" style={{ color: 'var(--red)' }}>{fmt(+avgMonthlyExp)}</div>
+          <div className="insight-desc">Averaged across {monthlyExp.length} month{monthlyExp.length !== 1 ? 's' : ''} of data</div>
+        </div>
+        <div className="insight-card">
+          <div className="insight-icon">âš–ï¸</div>
+          <div className="insight-title">Income vs Expense Ratio</div>
+          <div className="insight-value" style={{ color: 'var(--blue)' }}>
+            {totalInc > 0 ? (totalInc / totalExp).toFixed(2) : 'â€”'}x
+          </div>
+          <div className="insight-desc">
+            {totalInc > totalExp ? `You earn ${((totalInc / totalExp - 1) * 100).toFixed(0)}% more than you spend` : 'Expenses exceed income â€” review budget'}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="chart-card">
+          <div className="chart-header">
+            <div>
+              <div className="chart-title">Monthly Expense Trend</div>
+              <div className="chart-subtitle">Month by month spending</div>
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={monthlyExp}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+              <XAxis dataKey="month" tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'DM Mono' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: '#6b7280', fontSize: 11, fontFamily: 'DM Mono' }} axisLine={false} tickLine={false} tickFormatter={v => 'â‚¹' + (v/1000) + 'k'} />
+              <Tooltip content={<CustomTooltip />} />
+              <Line type="monotone" dataKey="expense" stroke="#f87171" strokeWidth={2} dot={{ fill: '#f87171', r: 4 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="chart-card">
+          <div className="chart-header">
+            <div>
+              <div className="chart-title">Category Breakdown</div>
+              <div className="chart-subtitle">Top 6 spending categories</div>
+            </div>
+          </div>
+          <div style={{ marginTop: 8 }}>
+            {catTotals.slice(0, 6).map(([cat, val]) => (
+              <div key={cat} style={{ marginBottom: 10 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                  <span style={{ color: CAT_COLORS[cat], fontWeight: 600 }}>{cat}</span>
+                  <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: 'var(--text-muted)' }}>{fmt(val)} &nbsp; {((val / totalExp) * 100).toFixed(1)}%</span>
+                </div>
+                <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: 4, height: 5, overflow: 'hidden' }}>
+                  <div style={{ background: CAT_COLORS[cat], height: '100%', width: `${(val / catTotals[0][1]) * 100}%`, borderRadius: 4, transition: 'width 0.5s ease' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DashboardPage({ transactions }) {
+  return (
+    <div className="page">
+      <SummaryCards transactions={transactions} />
+      <div className="charts-grid">
+        <BalanceTrend transactions={transactions} />
+        <SpendingPie transactions={transactions} />
+      </div>
+      <div className="section-header" style={{ marginBottom: 12 }}>
+        <div className="section-title">Recent Transactions</div>
+      </div>
+      <div className="tx-table-wrap">
+        <table className="tx-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Type</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.slice(0, 6).map(tx => (
+              <tr key={tx.id}>
+                <td style={{ fontFamily: 'DM Mono', fontSize: 12, color: 'var(--text-muted)' }}>{fmtDate(tx.date)}</td>
+                <td style={{ fontWeight: 500 }}>{tx.description}</td>
+                <td>
+                  <span className="cat-badge" style={{ background: (CAT_COLORS[tx.category] || '#6b7280') + '18', color: CAT_COLORS[tx.category] || '#6b7280' }}>
+                    {tx.category}
+                  </span>
+                </td>
+                <td><span className={`type-badge type-${tx.type}`}>{tx.type}</span></td>
+                <td className={`amount-${tx.type}`}>{tx.type === 'income' ? '+' : '-'}{fmt(tx.amount)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// â”€â”€â”€ APP â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+function App() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const [activePage, setActivePage] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (msg) => setToast(msg);
+  const { role } = state;
+
+  const navItems = [
+    { id: 'dashboard', icon: 'â—‰', label: 'Dashboard' },
+    { id: 'transactions', icon: 'â‡„', label: 'Transactions' },
+    { id: 'insights', icon: 'â—ˆ', label: 'Insights' },
+  ];
+
+  const pageTitles = { dashboard: 'Dashboard', transactions: 'Transactions', insights: 'Insights' };
+
+  return (
+    <div className="app">
+      <div className={`overlay-bg ${sidebarOpen ? 'show' : ''}`} onClick={() => setSidebarOpen(false)} />
+      <nav className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+        <div className="sidebar-logo">
+          <div className="logo-dot" /> Fin<span>Flow</span>
+        </div>
+        <div className="nav-section">
+          <div className="nav-label">Menu</div>
+          {navItems.map(item => (
+            <div key={item.id} className={`nav-item ${activePage === item.id ? 'active' : ''}`}
+              onClick={() => { setActivePage(item.id); setSidebarOpen(false); }}>
+              <span className="icon">{item.icon}</span>
+              {item.label}
+            </div>
+          ))}
+        </div>
+        <div className="sidebar-bottom">
+          <div className="role-switch">
+            <div className="role-label">Current Role</div>
+            <select className="role-select" value={role}
+              onChange={e => dispatch({ type: 'SET_ROLE', role: e.target.value })}>
+              <option value="admin">Admin</option>
+              <option value="viewer">Viewer</option>
+            </select>
+            <div className={`role-badge ${role}`}>
+              {role === 'admin' ? 'âš¡ Admin â€” Full Access' : 'ðŸ‘ Viewer â€” Read Only'}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <div className="main">
+        <div className="topbar">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button className="hamburger" onClick={() => setSidebarOpen(v => !v)}>â˜°</button>
+            <div className="topbar-title">{pageTitles[activePage]}</div>
+          </div>
+          <div className="topbar-actions">
+            <span style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'DM Mono' }}>
+              {state.transactions.length} records
+            </span>
+          </div>
+        </div>
+
+        {activePage === 'dashboard' && <DashboardPage transactions={state.transactions} />}
+        {activePage === 'transactions' && <TransactionsPage state={state} dispatch={dispatch} role={role} showToast={showToast} />}
+        {activePage === 'insights' && <InsightsPage transactions={state.transactions} />}
+      </div>
+
+      {toast && <Toast msg={toast} onClose={() => setToast(null)} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
